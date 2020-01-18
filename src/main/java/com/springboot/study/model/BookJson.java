@@ -19,6 +19,7 @@ public class BookJson {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date publicationDate;
 
+
     public String getName() {
         return name;
     }

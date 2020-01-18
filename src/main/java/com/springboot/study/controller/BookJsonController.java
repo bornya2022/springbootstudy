@@ -21,6 +21,8 @@ public class BookJsonController {
         bookJson.setPublicationDate(new Date());
         return bookJson;
 
+
+
     }
 
 }
