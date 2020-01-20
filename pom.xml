@@ -19,9 +19,21 @@
     </properties>
 
     <dependencies>
+        <!--除去jackson-databind-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        <exclusions>
+            <exclusion>
+                <artifactId>com.fasterxml.jackson.core</artifactId>
+                <groupId>jackson-databind</groupId>
+            </exclusion>
+        </exclusions>
+        </dependency>
+        <!--添加谷歌的JSON处理框架JSON-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
         </dependency>
         <!--添加模板引擎thymeleaf-->
         <dependency>

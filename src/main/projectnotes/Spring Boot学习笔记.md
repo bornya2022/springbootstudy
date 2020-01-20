@@ -75,3 +75,116 @@ spring.thymeleaf.suffix=.html
 
 详细thymealeaf用法参见官网：http://www.thymeleaf.org
 
+**其他模板引擎（例如freemarker等）整合流程类似。**
+
+如果采用前后端分离技术，则不需要整合视图层技术。
+
+## 3.spring boot整合web开发
+
+### 3.1 JSON数据传输
+
+JSON数据格式是现在主流的前后端数据传输方式。
+
+**在Spring MVC中使用消息转换器HttpMessageConverter对JSON的转换提供支持。**
+
+在spring boot中添加web依赖，该依赖中默认加入了**jackson-databind**作为JSON处理器
+
+应用实例参见代码
+
+#### 3.1.1自定义JSON转换器
+
+**Gson**
+
+Gson是谷歌的开源JSON解析框架，在使用Gson时需要去掉web依赖中的默认的
+
+jackson-databind处理器，在添加Gson依赖。
+
+```xml
+ <!--除去jackson-databind-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        <exclusions>
+            <exclusion>
+                <artifactId>com.fasterxml.jackson.core</artifactId>
+                <groupId>jackson-databind</groupId>
+            </exclusion>
+        </exclusions>
+        </dependency>
+        <!--添加谷歌的JSON处理框架JSON-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+```
+
+spring boot默认提供GsonHttpMessageConvertersConfiguration，所以依赖添加成功后，可以直接使用。
+
+但是Gson中没有自定义设置日期格式功能，所有要对日期进行格式化，需要自定义HttmMesssageConverter。
+
+实例参见代码。
+
+**fastjson**
+
+阿里的开源JSON解析框架，目前JSON解析速度最快的框架。
+
+### 3.2 静态资源访问
+
+**默认策略**
+
+spring boot 对于Spring MVC的自动化配置在**WebMvcAutoConfiguration**类中
+
+一般静态资源位于/resources/static目录下。
+
+### 3.3 文件上传
+
+在spring boot 中提供文件上传自动化配置类：MultipartAutoConfiguration默认采用StandardServletMultipartResolver组件实现文件上传。
+
+**单文件上传**
+
+操作步骤：
+
+首先创建文件上传页面：upload.html
+
+接着创建文件上传处理接口
+
+```java
+/**
+ * 文件上传处理控制器
+ */
+@RestController
+public class FileUploadController {
+    //设置日期格式
+    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy/MM/dd");
+    @PostMapping("/upload")
+    public String upload(MultipartFile multipartFile, HttpServletRequest request){
+        //设置上传文件保存路径
+        String realPath=request.getSession().getServletContext().getRealPath("/uploadfile");
+        //获取当前系统时间
+        String format=simpleDateFormat.format(new Date());
+        File file=new File(realPath+format);
+        //通过上传日期对上传文件进行分类保存
+        if(file.isDirectory()){
+            file.mkdirs();
+        }
+        String oldName=multipartFile.getOriginalFilename();
+        //采用随机数方式给上传文件命名，防止文件重名
+        String newName= UUID.randomUUID().toString()+
+                oldName.substring(oldName.lastIndexOf("."),oldName.length());
+        try {
+            //保存文件
+            multipartFile.transferTo(new File(file,newName));
+            //设置上传文件的访问路径
+            String filepath=request.getScheme()+"://"+request.getServerName()+":"+
+                    request.getServerPort()+"/uploadfile/"+format+newName;
+            return  filepath;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "上传失败";
+
+
+    }
+}
+```
+
