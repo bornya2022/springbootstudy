@@ -188,3 +188,83 @@ public class FileUploadController {
 }
 ```
 
+### 3.4@ControllerAdvice
+
+该注解主要应用于处理全局数据。
+
+**实例一：处理全局异常。**
+
+通过@ControllerAdvice结合@ExceptionHandler定义全局异常捕获机制。
+
+```java
+@ControllerAdvice
+public class CustomExceptionHandler {
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public void uploadException(MaxUploadSizeExceededException e, HttpServletResponse resp)
+        throws IOException{
+        resp.setContentType("text/html;charset=utf-8");
+        PrintWriter out=resp.getWriter();
+        ///日志输出
+        out.write("上传文件大小超出限制");
+        out.flush();
+        out.close();
+        
+    }
+}
+```
+
+**实例二：添加全局数据**
+
+@ControllerAdvice是一个全局数据处理组件，在该注解中使用@ModelAttribute配置。
+
+```java
+/**
+ * 全局数据配置实例
+ * 任意Controller请求userInfo方法参数Model都可以获得info中的数据
+ */
+@ControllerAdvice
+public class GlobalConfig {
+    @ModelAttribute(value = "info")
+    public Map<String,String> userInfo(){
+        HashMap<String,String> map=new HashMap<>();
+        map.put("username","罗贯中");
+        map.put("gender","男");
+        return map;
+    }
+    
+}
+```
+
+**实例三：请求参数预处理**
+
+@ControllerAdvice结合@InitBinde实现参数预处理（表单中的数据绑定到实体之前的一些额外处理）功能。
+
+应用实例：
+
+```java
+/**
+ * 请求参数预处理
+ * 2个实体类的name属性名相同时，参数传递会混淆，采用@ControllerAdvice结合@InitBinder解决该问题。
+ */
+public class CanshuBookController {
+    @GetMapping("/canshubook")
+    @ResponseBody
+    public String book(@ModelAttribute("b") Book book, @ModelAttribute("a") Author author){
+        return book.toString()+">>>>"+author.toString();
+    }
+}
+
+
+   // @InitBinder("b")处理Controller中@ModelAttribute("b")对应的参数
+    //在WebDataBinder中还可以设置允许的字段，禁止的字段，必填字段和验证器等。
+    @InitBinder("b")
+    public void init(WebDataBinder binder){
+        binder.setFieldDefaultPrefix("b.");
+    }
+    @InitBinder("a")
+    public void init1(WebDataBinder binder){
+        binder.setFieldDefaultPrefix("a.");
+    }
+
+```
+
